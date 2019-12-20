@@ -1,6 +1,14 @@
         !cpu 6502
         !to "build/bp.prg",cbm                  ; output file
 
+        !source "src/constants.asm"
+        !source "src/load_res.asm"
+        !source "src/init_clearscreen.asm"
+        !source "src/text_routines.asm"
+        !source "src/text.asm"
+        !source "src/clear_borders.asm"
+        !source "src/change_border.asm"
+
         * = $0801                                  ; BASIC start address (#2049)
         !byte $0d,$08,$dc,$07,$9e,$20,$34,$39   ; BASIC loader to start at $c000
         !byte $31,$35,$32,$00,$00,$00           ; puts BASIC line 2012 SYS 49152
@@ -11,9 +19,12 @@
                                                 ; change $314 and then $315
 
         jsr init_screen                         ; clear the screen
-        jsr init_text                           ; set initial text position
         jsr sid_init                            ; init music routine now
+                                 
+
         
+        lda #$00 
+        sta delay_counter
 
         ; turn off other sources of interupts
         ldy #$7f    ; $7f = %01111111
@@ -34,37 +45,49 @@
         sta $314    ; store in $314/$315
         stx $315
 
-        lda #$00    ; we define at what line number the interrupt should be triggered 
+        lda #$00    ; init value: 00 - we define at what line number the interrupt should be triggered 
         sta $d012   ; (could use any line num here, just want a notification once per screen refresh)
+
+
 
         cli         ; clear interrupt disable flag
         jmp *       ; infinite loop
 
+
 ; custom interrupt routine -- whenever raster beam reaches line zero, this is executed
 irq     dec $d019        ; acknowledge IRQ and notify again on the next screen refresh
+
+        ;jsr clear_borders
 
         jsr sid_play	 ; trigger the actual music player routine with every screen refresh
         ;TOOD: jsr loadbitmap
         ; TODO: jsr update_ship    ; move ship
         ;inc $d020        ; flash color background
 
-        jmp $ea81        ; return to kernel interrupt routine
 
 
-; load source
-!source "src/constants.asm"
-!source "src/text.asm"
-!source "src/init_clearscreen.asm"
-!source "src/load_res.asm"
-!source "src/text_routines.asm"
+        lda delay_counter 
+        cmp #$FF              ; previous value: #$34
+        beq showtext
+        jsr init_screen
 
-init_text               ldx #$00      ; set initial text position
-init_secondary_text     ldy #$00
+        inc delay_counter  ; increase delay counter
+        
 
 
-        jsr loop_text
-        jsr loop_secondary_text
 
-rts
+
+showtext
+        jsr init_text  
+        jsr init_secondary_text
+        ;jsr change_border
+
+
+
+
+
+        jmp $ea31      ; return to Kernel routine
+
+
 
 

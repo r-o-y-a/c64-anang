@@ -1,4 +1,6 @@
 
+
+init_text ldx #$00
 loop_text  
         lda line1,x      ; read characters from line1 table of text...
         sta $0590,x      ; ...and store in screen ram near the center row
@@ -10,7 +12,7 @@ loop_text
         rts
 
 
-
+init_secondary_text ldy #$00
 loop_secondary_text  
         lda line3,y      ; read characters from line1 table of text...
         sta $0630,y      ; ...and store in screen ram near the center row
@@ -18,3 +20,4 @@ loop_secondary_text
         cpy #$28         ; finished when all 40 cols of a line are processed -- compare x to value of 40
         bne loop_secondary_text    ; the branch command bne will jump back to our label loop_text if the comparison is not true. 
         rts
+        
