@@ -1,0 +1,13 @@
+irq	= $c038	; ?
+init_secondary_text	= $18c9	; unused
+clear	= $c0c1
+sid_play	= $1003	; ?
+address_music	= $1000
+init_text	= $18c7	; ?
+loop_secondary_text	= $18bb
+sid_init	= $1000	; ?
+loop_text	= $18a9
+line2	= $c069
+line3	= $c091
+line1	= $c041
+init_screen	= $c0b9	; ?
