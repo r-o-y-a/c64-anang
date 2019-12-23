@@ -20,7 +20,7 @@
 
         jsr init_screen                         ; clear the screen
         jsr sid_init                            ; init music routine now
-                                 
+        
 
         
         lda #$00 
@@ -57,33 +57,52 @@
 ; custom interrupt routine -- whenever raster beam reaches line zero, this is executed
 irq     dec $d019        ; acknowledge IRQ and notify again on the next screen refresh
 
-        ;jsr clear_borders
+   
+loop1:  lda #$fb  ; wait for vertical retrace
 
-        jsr sid_play	 ; trigger the actual music player routine with every screen refresh
-        ;TOOD: jsr loadbitmap
-        ; TODO: jsr update_ship    ; move ship
-        ;inc $d020        ; flash color background
+loop2:  cmp $d012 ; until it reaches 251th raster line ($fb)
+        bne loop2 ; which is out of the inner screen area
 
+        inc delay_counter 
+        lda delay_counter
+        cmp #$32    ; check if counter reached 50
+        bne out
 
+        lda #$00    ; reset if equal
+        sta delay_counter
 
-        lda delay_counter 
-        cmp #$FF              ; previous value: #$34
-        beq showtext
-        jsr init_screen
+        inc $d021
+        inc $d020
+        jsr showtext
+        jsr randomchars
 
-        inc delay_counter  ; increase delay counter
+out:
+        lda $d012
+loop3:  cmp $d012
+        beq loop3 
         
+        jsr sid_play
 
-
-
+        jmp loop1  
 
 showtext
         jsr init_text  
         jsr init_secondary_text
-        ;jsr change_border
 
+randomchars
+        
+        ; generate random number from sid
+        lda #$FF  ; maximum frequency value
+        sta $D40E ; voice 3 frequency low byte
+        sta $D40F ; voice 3 frequency high byte
+        lda #$80  ; noise waveform, gate bit off
+        sta $D412 ; voice 3 control register
+        lda $D41B ; get random value from 0-255
 
-
+        tay
+        ldx #$53
+        sta $0400, y
+        rts
 
 
         jmp $ea31      ; return to Kernel routine
